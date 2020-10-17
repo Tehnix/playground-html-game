@@ -4,7 +4,7 @@
   </head>
 <body>
 
-<h1 align="center">Is this Chunky Snek? 🐍</h1>
+<h1 align="center">Is this Snek? 🐍</h1>
 
 <canvas id="gameCanvas" width="800" height="600"></canvas>
 
@@ -19,17 +19,22 @@ let canvasContext;
 // Our static game element information.
 const BALL_RADIUS = 6;
 const PADDLE_WIDTH = 5;
-const PADDLE_HEIGHT = 75;
+const PADDLE_HEIGHT = 80;
 const PADDLE_X = 20;
+const COMPUTER_MAX_SPEED = 6;
+const COMPUTER_IDLE_DISTANCE = PADDLE_HEIGHT * 0.2;
 
 // Our dynamic game element information.
 let ballX = 700;
 let ballY = 50;
-let ballSpeedX = 10;
+let ballSpeedX = 12;
 let ballSpeedY = 5;
 
 let leftPaddleY = 250;
 let rightPaddleY = 250;
+
+let leftPlayerScore = 0
+let rightPlayerScore = 0
 
 window.onload = function() {
   canvas = document.getElementById("gameCanvas");
@@ -37,6 +42,7 @@ window.onload = function() {
 
   let fps = 30;
   setInterval(function() {
+    computerMovement();
     moveEverything();
     drawEverything();
   }, 1000 / fps);
@@ -44,8 +50,26 @@ window.onload = function() {
   canvas.addEventListener('mousemove', function(evt) {
     const mousePos = calculateMousePos(evt);
     leftPaddleY = mousePos.y - (PADDLE_HEIGHT / 2);
-    rightPaddleY = mousePos.y - (PADDLE_HEIGHT / 2);
   });
+}
+
+function computerMovement() {
+  const paddleCenter = (rightPaddleY + PADDLE_HEIGHT / 2);
+  if (paddleCenter < ballY - COMPUTER_IDLE_DISTANCE) {
+    if ((ballY - paddleCenter) < COMPUTER_MAX_SPEED) {
+      rightPaddleY += + ballY - paddleCenter;
+    } else {
+      rightPaddleY += + COMPUTER_MAX_SPEED;
+    }
+  } else if (paddleCenter == ballY) {
+    // Do nothing.
+  } else if (paddleCenter > ballY + COMPUTER_IDLE_DISTANCE) {
+    if ((paddleCenter - ballY) < COMPUTER_MAX_SPEED) {
+      rightPaddleY += + paddleCenter - ballY;
+    } else {
+      rightPaddleY += - COMPUTER_MAX_SPEED;
+    }
+  }
 }
 
 function rightSidePaddleX() {
@@ -70,23 +94,26 @@ function ballReset() {
 }
 
 function moveEverything() {
-  ballX = ballX + ballSpeedX;
-  ballY = ballY + ballSpeedY;
+  ballX += + ballSpeedX;
+  ballY += + ballSpeedY;
 
   // Handle the ball reaching the right side.
   if (ballX >= (rightSidePaddleX() - PADDLE_WIDTH - BALL_RADIUS) && ballX < rightSidePaddleX()) {
     if (rightPaddleY <= ballY && ballY <= (rightPaddleY + PADDLE_HEIGHT)) {
       ballSpeedX = -1 * Math.abs(ballSpeedX);
     }
-  } else if (ballX >= (canvas.width - BALL_RADIUS)) {
+  } else if (ballX >= (canvas.width + BALL_RADIUS * 2)) {
+    leftPlayerScore += 1;
     ballReset();
   }
+
   // Handle the ball reaching the left side.
   if (ballX <= (PADDLE_X + PADDLE_WIDTH + BALL_RADIUS) && ballX > PADDLE_X) {
     if (leftPaddleY <= ballY && ballY <= (leftPaddleY + PADDLE_HEIGHT)) {
       ballSpeedX = Math.abs(ballSpeedX);
     }
-  } else if (ballX <= (0 + BALL_RADIUS)) {
+  } else if (ballX <= 0 - BALL_RADIUS * 2) {
+    rightPlayerScore += 1;
     ballReset();
   }
 
@@ -122,6 +149,11 @@ function drawEverything() {
   );
   // Place the ball onto the game screen.
   colorCircle(ballX, ballY, BALL_RADIUS, itemColor);
+
+  canvasContext.fillStyle = 'white';
+  canvasContext.font = "30px Verdana";
+  canvasContext.fillText(leftPlayerScore, 100, 100);
+  canvasContext.fillText(rightPlayerScore, canvas.width - 100, 100);
 }
 
 function colorRect(leftX, topY, width, height, drawColor) {
