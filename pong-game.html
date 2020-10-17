@@ -1,0 +1,141 @@
+<html>
+  <head>
+    <meta charset="UTF-8">
+  </head>
+<body>
+
+<h1 align="center">Is this Chunky Snek? 🐍</h1>
+
+<canvas id="gameCanvas" width="800" height="600"></canvas>
+
+<script>
+let backgroundColor = 'black';
+let itemColor = 'orange';
+
+// Our primitives for the canvas.
+let canvas;
+let canvasContext;
+
+// Our static game element information.
+const BALL_RADIUS = 6;
+const PADDLE_WIDTH = 5;
+const PADDLE_HEIGHT = 75;
+const PADDLE_X = 20;
+
+// Our dynamic game element information.
+let ballX = 700;
+let ballY = 50;
+let ballSpeedX = 10;
+let ballSpeedY = 5;
+
+let leftPaddleY = 250;
+let rightPaddleY = 250;
+
+window.onload = function() {
+  canvas = document.getElementById("gameCanvas");
+  canvasContext = canvas.getContext("2d");
+
+  let fps = 30;
+  setInterval(function() {
+    moveEverything();
+    drawEverything();
+  }, 1000 / fps);
+
+  canvas.addEventListener('mousemove', function(evt) {
+    const mousePos = calculateMousePos(evt);
+    leftPaddleY = mousePos.y - (PADDLE_HEIGHT / 2);
+    rightPaddleY = mousePos.y - (PADDLE_HEIGHT / 2);
+  });
+}
+
+function rightSidePaddleX() {
+  return canvas.width - PADDLE_X - PADDLE_WIDTH;
+}
+
+function calculateMousePos(evt) {
+  const rect =  canvas.getBoundingClientRect();
+  const root = document.documentElement;
+  const mouseX = evt.clientX - rect.left - root.scrollLeft;
+  const mouseY = evt.clientY - rect.top - root.scrollTop;
+  return {
+    x: mouseX,
+    y: mouseY,
+  };
+}
+
+function ballReset() {
+  ballX = canvas.width / 2;
+  ballY = canvas.height / 2;
+  ballSpeedX = -1 * ballSpeedX;
+}
+
+function moveEverything() {
+  ballX = ballX + ballSpeedX;
+  ballY = ballY + ballSpeedY;
+
+  // Handle the ball reaching the right side.
+  if (ballX >= (rightSidePaddleX() - PADDLE_WIDTH - BALL_RADIUS) && ballX < rightSidePaddleX()) {
+    if (rightPaddleY <= ballY && ballY <= (rightPaddleY + PADDLE_HEIGHT)) {
+      ballSpeedX = -1 * Math.abs(ballSpeedX);
+    }
+  } else if (ballX >= (canvas.width - BALL_RADIUS)) {
+    ballReset();
+  }
+  // Handle the ball reaching the left side.
+  if (ballX <= (PADDLE_X + PADDLE_WIDTH + BALL_RADIUS) && ballX > PADDLE_X) {
+    if (leftPaddleY <= ballY && ballY <= (leftPaddleY + PADDLE_HEIGHT)) {
+      ballSpeedX = Math.abs(ballSpeedX);
+    }
+  } else if (ballX <= (0 + BALL_RADIUS)) {
+    ballReset();
+  }
+
+  // Handle the ball bouncing on the top or bottom.
+  if (ballY >= (canvas.height - BALL_RADIUS)) {
+    ballY = canvas.height - BALL_RADIUS;
+    ballSpeedY = -1 * ballSpeedY;
+  } else if (ballY <= (0 + BALL_RADIUS)) {
+    ballY = 0 + BALL_RADIUS;
+    ballSpeedY = -1 * ballSpeedY;
+  }
+}
+
+function drawEverything() {
+  // Set up the background color.
+  colorRect(0, 0, canvas.width, canvas.height, backgroundColor);
+
+  // Place the left player paddle.
+  colorRect(
+    PADDLE_X,
+    leftPaddleY,
+    PADDLE_WIDTH,
+    PADDLE_HEIGHT,
+    itemColor
+  );
+  // Place the right player paddle.
+  colorRect(
+    rightSidePaddleX(),
+    rightPaddleY,
+    PADDLE_WIDTH,
+    PADDLE_HEIGHT,
+    itemColor
+  );
+  // Place the ball onto the game screen.
+  colorCircle(ballX, ballY, BALL_RADIUS, itemColor);
+}
+
+function colorRect(leftX, topY, width, height, drawColor) {
+  canvasContext.fillStyle = drawColor;
+  canvasContext.fillRect(leftX, topY, width, height);
+}
+
+function colorCircle(leftX, topY, radius, drawColor) {
+  canvasContext.fillStyle = drawColor;
+  canvasContext.beginPath();
+  canvasContext.arc(leftX, topY, radius, 0, Math.PI * 2, true);
+  canvasContext.fill();
+}
+
+</script>
+
+</body></html>
